@@ -3,7 +3,10 @@ client:
   applicationId: 0
   
 imperial:
+  use_api_key: false
   api_key: 0
+  use_har: true
+  har_path: /path/to/har/file.har
 
 database:
   host: 127.0.0.1

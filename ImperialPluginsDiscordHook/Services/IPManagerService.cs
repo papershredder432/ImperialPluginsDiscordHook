@@ -5,16 +5,19 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using ImperialPlugins;
+using ImperialPlugins.Models;
 using ImperialPlugins.Models.Notifications;
 using ImperialPlugins.Models.Plugins;
 using ImperialPlugins.Models.Servers;
 using ImperialPluginsDiscordHook.Enum;
+using Microsoft.Extensions.Configuration;
 using Timer = System.Timers.Timer;
 
 namespace ImperialPluginsDiscordHook.Services;
 
-public class IPManagerService
+public class IpManagerService
 {
+    private readonly IConfigurationRoot _configuration;
     private readonly DiscordSocketClient _discordSocketClient;
     private readonly ImperialPluginsClient _imperialPluginsClient;
     private readonly LoggingService _loggingService;
@@ -23,11 +26,55 @@ public class IPManagerService
     public IPPlugin[] PluginsCache;
     public DateTime LastRefresh;
     
-    public IPManagerService(DiscordSocketClient discordSocketClient, ImperialPluginsClient imperialPluginsClient, LoggingService loggingService)
+    public IpManagerService(DiscordSocketClient discordSocketClient, IConfigurationRoot configuration, ImperialPluginsClient imperialPluginsClient, LoggingService loggingService)
     {
+        _configuration = configuration;
         _discordSocketClient = discordSocketClient; 
         _imperialPluginsClient = imperialPluginsClient;
         _loggingService = loggingService;
+        
+        _discordSocketClient.ButtonExecuted += OnButtonExecuted;
+        
+        LoginAsync();
+    }
+
+    private async Task LoginAsync()
+    {
+        if (_imperialPluginsClient.IsLoggedIn)
+        {
+            await _loggingService.LogVerbose(ELogType.Info, "ImperialPlugins client already logged in.");
+            return;
+        }
+
+        if (bool.TryParse(_configuration["imperial:use_api_key"], out var useApiKey) && bool.TryParse(_configuration["imperial:use_har"], out var useHar))
+        {
+            if (useApiKey && useHar)
+            {
+                await _loggingService.LogVerbose(ELogType.Warning, "Both API key and HAR file are enabled. Please disable one.");
+                return;
+            }
+            
+            if (useApiKey) {
+                if (!_imperialPluginsClient.Login(new IPSessionCredentials(_configuration["imperial:api_key"])))
+                {
+                    await _loggingService.LogVerbose(ELogType.Error, "Could not log into ImperialPlugins using the provided API key.");
+                    return;
+                }
+
+                await _loggingService.LogVerbose(ELogType.Info, $"Logged into ImperialPlugins with API as {_imperialPluginsClient.Session.UserName}");
+            }
+            
+            if (useHar)
+            {
+                if (!_imperialPluginsClient.Login(new IPSessionCredentials("-h", _configuration["imperial:har_path"])))
+                {
+                    await _loggingService.LogVerbose(ELogType.Error, "Could not log into ImperialPlugins using the provided HAR file.");
+                    return;
+                }
+
+                await _loggingService.LogVerbose(ELogType.Info, $"Logged into ImperialPlugins with HAR as {_imperialPluginsClient.Session.UserName}");
+            }
+        }
         
         RefreshCache();
         
@@ -35,8 +82,7 @@ public class IPManagerService
         timer.Elapsed += timerElapsed;
         timer.Interval = 300000;
         timer.Start();
-        
-        _discordSocketClient.ButtonExecuted += OnButtonExecuted;
+        await _loggingService.LogVerbose(ELogType.Info, $"Started the cache refresh timer. Interval: {timer.Interval/1000/60}m.");
     }
 
     private async Task OnButtonExecuted(SocketMessageComponent component)
@@ -76,8 +122,8 @@ public class IPManagerService
     {
         RefreshCache();
         
+        /*
         var unreadNotifs = _imperialPluginsClient.GetNotifications(100000).Items.Where(x => x.readTime == null);
-
         foreach (var notification in unreadNotifs)
         {
             var embed = new EmbedBuilder()
@@ -114,6 +160,7 @@ public class IPManagerService
                     break;
             }
         }
+        */
     }
 
     private void RefreshCache()
@@ -125,17 +172,19 @@ public class IPManagerService
         }
         
         _loggingService.LogVerbose(ELogType.Info, "Refreshing cache...");
-
+        
         var timer = new Timer();
         timer.Start();
         
+        /*
         UsersCache = _imperialPluginsClient.GetUsers(100000).Items;
         ServersCache = _imperialPluginsClient.GetCustomerServers().Items;
         PluginsCache = _imperialPluginsClient.GetOwnPlugins(10000).Items;
+        */
         
         timer.Stop();
         
         LastRefresh = DateTime.UtcNow;
-        _loggingService.LogVerbose(ELogType.Info, $"Refreshed cache. Took {timer.Interval}ms.");
+        _loggingService.LogVerbose(ELogType.Info, $"Refreshed cache.");
     }
 }

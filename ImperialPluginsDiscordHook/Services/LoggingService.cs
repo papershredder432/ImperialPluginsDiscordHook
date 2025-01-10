@@ -47,11 +47,10 @@ public class LoggingService
         };
         
         // Sources: Discord | Gateway
+        
+        File.AppendAllText(_logFile, $"[{DateTime.UtcNow:u}] [{message.Severity}/{message.Source}]: {message.Exception?.ToString() ?? message.Message}" + "\n");
 
-        string logText = $"[{DateTime.UtcNow:u}] [{colorType}/{message.Source.Pastel(Color.Blue)}]: {message.Exception?.ToString() ?? message.Message}";
-        File.AppendAllText(_logFile, logText + "\n");
-
-        return Console.Out.WriteLineAsync(logText);
+        return Console.Out.WriteLineAsync($"[{DateTime.UtcNow:u}] [{colorType}/{message.Source.Pastel(Color.Blue)}]: {message.Exception?.ToString() ?? message.Message}");
     }
 
     public Task LogVerbose(ELogType logType, string? message)
@@ -74,10 +73,9 @@ public class LoggingService
             ELogType.Warning => $"{logType.ToString().Pastel(Color.DarkOrange)}",
             _ => $"{logType.ToString().Pastel(Color.Gray)}"
         };
+        
+        File.AppendAllText(_debugLogFile, $"[{DateTime.UtcNow:u}] [{logType}/Verbose]: {message}" + "\n");
 
-        var logText = $"[{DateTime.UtcNow:u}] [{colorType}/{"Verbose".Pastel(Color.Yellow)}]: {message}";
-        File.AppendAllText(_debugLogFile, logText + "\n");
-
-        return Console.Out.WriteLineAsync(logText);
+        return Console.Out.WriteLineAsync($"[{DateTime.UtcNow:u}] [{colorType}/{"Verbose".Pastel(Color.Yellow)}]: {message}");
     }
 }
