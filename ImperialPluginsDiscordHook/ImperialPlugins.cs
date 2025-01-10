@@ -31,7 +31,7 @@ public class ImperialPlugins
                 .AddSingleton<LoggingService>()
                 .AddSingleton<InteractionProviderService>()
                 .AddSingleton<ImperialPluginsClient>()
-                .AddSingleton<ImperialPluginsCacheService>()
+                .AddSingleton<IPManagerService>()
                 .AddSingleton<InteractionProviderService>()
                 .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
                 .AddSingleton(new CommandService(new CommandServiceConfig()))
@@ -55,14 +55,12 @@ public class ImperialPlugins
             var commands = provider.GetRequiredService<InteractionService>();
             var config = provider.GetRequiredService<IConfigurationRoot>();
             var imperialPluginsClient = provider.GetRequiredService<ImperialPluginsClient>();
-            var imperialPluginsCacheService = provider.GetRequiredService<ImperialPluginsCacheService>();
+            var ipManagerService = provider.GetRequiredService<IPManagerService>();
             var interactionProviderService = provider.GetRequiredService<InteractionProviderService>();
             var loggingService = provider.GetRequiredService<LoggingService>();
             
-            //await imperialPluginsCacheService.InitializeAsync();
-            
             /*
-            if (!imperialPluginsClient.Login(new IPSessionCredentials(config["imperial:api_key"])))
+            if (!ipManagerService.Login(new IPSessionCredentials(config["imperial:api_key"])))
             {
                 await loggingService.LogVerbose(ELogType.WARNING, "ImperialPlugins client cannot log in. Exiting.");
                 await Task.Delay(5000);
@@ -76,7 +74,7 @@ public class ImperialPlugins
                 
                 await loggingService.LogVerbose(ELogType.INFO, $"Discord Client logged in as {client.CurrentUser.Username}#{client.CurrentUser.Discriminator} ({client.CurrentUser.Id}) with {commands.SlashCommands.Count} Slash Commands(s)");
                 await loggingService.LogVerbose(ELogType.INFO, $"ImperialPlugins Client logged in as {(!imperialPluginsClient.IsLoggedIn ? "NOT SIGNED IN" : imperialPluginsClient.Self.Name)}");
-                    // with {(imperialPluginsCacheService.UsersCache.Count())} customers running {imperialPluginsCacheService.ServersCache.Count()} servers
+                    // with {(ipManagerService.UsersCache.Count())} customers running {ipManagerService.ServersCache.Count()} servers
                 await client.SetActivityAsync(new Game("ImperialPlugins", ActivityType.Watching));
             };
 
