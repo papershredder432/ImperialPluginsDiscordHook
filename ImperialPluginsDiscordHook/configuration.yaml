@@ -1,0 +1,17 @@
+client:
+  token: NzQ5MzEyMTMxNDU0ODYxMzky.GZblZT.foCrSIgFwCt6J7lRqcBsd8L2k1-MEyW5t4cjPk
+  applicationId: 0
+  
+imperial:
+  api_key: 0
+
+database:
+  host: 127.0.0.1
+  port: 3306
+  username: username
+  password: password
+  name: name
+  table: table
+
+dev:
+  debug: true
