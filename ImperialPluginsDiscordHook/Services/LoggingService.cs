@@ -6,7 +6,9 @@ using Discord.Commands;
 using Discord.WebSocket;
 using ImperialPluginsDiscordHook.Enum;
 using Microsoft.Extensions.Configuration;
+using Pastel;
 using Console = System.Console;
+using Color = System.Drawing.Color;
 
 namespace ImperialPluginsDiscordHook.Services;
 
@@ -34,7 +36,19 @@ public class LoggingService
         if (!File.Exists(_logFile))
             File.Create(_logFile).Dispose();
 
-        string logText = $"[{DateTime.UtcNow:u}] [{message.Severity}/{message.Source}]: {message.Exception?.ToString() ?? message.Message}";
+        var colorType = message.Severity switch
+        {
+            LogSeverity.Critical => $"{message.Severity.ToString().Pastel(Color.DarkRed)}",
+            LogSeverity.Error => $"{message.Severity.ToString().Pastel(Color.Red)}",
+            LogSeverity.Warning => $"{message.Severity.ToString().Pastel(Color.DarkOrange)}",
+            LogSeverity.Info => $"{message.Severity.ToString().Pastel(Color.Cyan)}",
+            LogSeverity.Verbose or LogSeverity.Debug => $"{message.Severity.ToString().Pastel(Color.Yellow)}",
+            _ => $"{message.Severity.ToString().Pastel(Color.Gray)}"
+        };
+        
+        // Sources: Discord | Gateway
+
+        string logText = $"[{DateTime.UtcNow:u}] [{colorType}/{message.Source.Pastel(Color.Blue)}]: {message.Exception?.ToString() ?? message.Message}";
         File.AppendAllText(_logFile, logText + "\n");
 
         return Console.Out.WriteLineAsync(logText);
@@ -49,10 +63,19 @@ public class LoggingService
             
         if (message == null && message!.Length < 1) message = "RETARD SPOTTED";
 
-        if (logType == ELogType.DEBUG && _configuration["dev:debug"] != "true")
+        if (logType == ELogType.Debug && _configuration["dev:debug"] != "true")
             return Task.CompletedTask;
 
-        var logText = $"[{DateTime.UtcNow:u}] [{logType}]: {message}";
+        var colorType = logType switch
+        {
+            ELogType.Debug => $"{logType.ToString().Pastel(Color.Yellow)}",
+            ELogType.Error => $"{logType.ToString().Pastel(Color.Red)}",
+            ELogType.Info => $"{logType.ToString().Pastel(Color.Cyan)}",
+            ELogType.Warning => $"{logType.ToString().Pastel(Color.DarkOrange)}",
+            _ => $"{logType.ToString().Pastel(Color.Gray)}"
+        };
+
+        var logText = $"[{DateTime.UtcNow:u}] [{colorType}/{"Verbose".Pastel(Color.Yellow)}]: {message}";
         File.AppendAllText(_debugLogFile, logText + "\n");
 
         return Console.Out.WriteLineAsync(logText);

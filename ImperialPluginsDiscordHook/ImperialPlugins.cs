@@ -67,13 +67,13 @@ public class ImperialPlugins
                 return;
             }
             */
-
+            
             client.Ready += async () =>
             {
                 await commands.RegisterCommandsGloballyAsync();
                 
-                await loggingService.LogVerbose(ELogType.INFO, $"Discord Client logged in as {client.CurrentUser.Username}#{client.CurrentUser.Discriminator} ({client.CurrentUser.Id}) with {commands.SlashCommands.Count} Slash Commands(s)");
-                await loggingService.LogVerbose(ELogType.INFO, $"ImperialPlugins Client logged in as {(!imperialPluginsClient.IsLoggedIn ? "NOT SIGNED IN" : imperialPluginsClient.Self.Name)}");
+                await loggingService.LogVerbose(ELogType.Info, $"Discord Client logged in as {client.CurrentUser.Username}#{client.CurrentUser.Discriminator} ({client.CurrentUser.Id}) with {commands.SlashCommands.Count} Slash Commands(s)");
+                await loggingService.LogVerbose(ELogType.Info, $"ImperialPlugins Client logged in as {(!imperialPluginsClient.IsLoggedIn ? "NOT SIGNED IN" : imperialPluginsClient.Self.Name)}");
                     // with {(ipManagerService.UsersCache.Count())} customers running {ipManagerService.ServersCache.Count()} servers
                 await client.SetActivityAsync(new Game("ImperialPlugins", ActivityType.Watching));
             };

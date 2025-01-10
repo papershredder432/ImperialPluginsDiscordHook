@@ -120,11 +120,11 @@ public class IPManagerService
     {
         if (!_imperialPluginsClient.IsLoggedIn)
         {
-            _loggingService.LogVerbose(ELogType.WARNING, $"Could not update cache, not logged in. Last time cache was updated: {LastRefresh}");
+            _loggingService.LogVerbose(ELogType.Warning, $"Could not update cache, not logged in. Last time cache was updated: {LastRefresh}");
             return;
         }
         
-        _loggingService.LogVerbose(ELogType.INFO, "Refreshing cache...");
+        _loggingService.LogVerbose(ELogType.Info, "Refreshing cache...");
 
         var timer = new Timer();
         timer.Start();
@@ -136,6 +136,6 @@ public class IPManagerService
         timer.Stop();
         
         LastRefresh = DateTime.UtcNow;
-        _loggingService.LogVerbose(ELogType.INFO, $"Refreshed cache. Took {timer.Interval}ms.");
+        _loggingService.LogVerbose(ELogType.Info, $"Refreshed cache. Took {timer.Interval}ms.");
     }
 }

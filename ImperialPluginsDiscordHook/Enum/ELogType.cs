@@ -2,8 +2,8 @@ namespace ImperialPluginsDiscordHook.Enum;
 
 public enum ELogType
 {
-    DEBUG,
-    ERROR,
-    INFO,
-    WARNING
+    Debug,
+    Error,
+    Info,
+    Warning
 }

@@ -34,8 +34,8 @@ public class InteractionProviderService
         }
         catch (Exception ex)
         {
-            await _loggingService.LogVerbose(ELogType.ERROR, ex.Message);
-            await _loggingService.LogVerbose(ELogType.DEBUG, ex.StackTrace);
+            await _loggingService.LogVerbose(ELogType.Error, ex.Message);
+            await _loggingService.LogVerbose(ELogType.Debug, ex.StackTrace);
         }
     }
 }
