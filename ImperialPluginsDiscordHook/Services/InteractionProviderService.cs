@@ -1,4 +1,6 @@
+using System;
 using System.Reflection;
+using System.Threading.Tasks;
 using Discord.Interactions;
 using Discord.WebSocket;
 using ImperialPluginsDiscordHook.Enum;
