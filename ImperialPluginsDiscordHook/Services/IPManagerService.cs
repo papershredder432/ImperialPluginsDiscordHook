@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
@@ -37,10 +38,11 @@ public class IpManagerService
         _loggingService = loggingService;
         
         _discordSocketClient.ButtonExecuted += OnButtonExecuted;
+        _discordSocketClient.ModalSubmitted += OnModalSubmitted;
         
         LoginAsync();
     }
-
+    
     private async Task LoginAsync()
     {
         if (_imperialPluginsClient.IsLoggedIn)
@@ -83,16 +85,40 @@ public class IpManagerService
         
         var timer = new Timer();
         timer.Elapsed += timerElapsed;
-        timer.Interval = 300000;
+        timer.Interval = 5*1000*60;
         timer.Start();
         await _loggingService.LogVerbose(ELogType.Info, $"Started the cache refresh timer. Interval: {timer.Interval/1000/60}m.");
+    }
+    
+    private async Task OnModalSubmitted(SocketModal modal)
+    {
+        switch (modal.Data.CustomId)
+        {
+            case "ticket_reply":
+                var interaction = (IComponentInteraction) modal;
+                var embed = interaction.Message.Embeds.FirstOrDefault();
+
+                if (!int.TryParse(embed.Description.TrimStart("Ticket #".ToCharArray()), out int ticketId))
+                {
+                    await modal.RespondAsync("Could not parse ticket number.", ephemeral: true);
+                    return;   
+                }
+                
+                await modal.RespondAsync("Replied to ticket.", ephemeral: true);
+                break;
+        }
     }
 
     private async Task OnButtonExecuted(SocketMessageComponent component)
     {
         var interaction = (IComponentInteraction) component;
         var embed = interaction.Message.Embeds.FirstOrDefault();
-        var ticket = _imperialPluginsClient.GetTicketByID(int.Parse(embed?.Footer.Value.Text));
+
+        if (!int.TryParse(embed.Description.TrimStart("Ticket #".ToCharArray()), out int ticketId))
+        {
+            await component.RespondAsync("Could not parse ticket number.", ephemeral: true);
+            return;   
+        }
         
         switch (component.Data.CustomId)
         {
@@ -103,6 +129,7 @@ public class IpManagerService
                 break;
             
             case "whitelist_servers":
+                GetCustomerServers(GetUserAsync(Regex.Replace(embed.Fields.FirstOrDefault().Value, "<p>[A-Za-z]+ has created a new ticket: Whitelist request</p>", "")));
                 break;
             
             case "ticket_reply":
@@ -125,15 +152,15 @@ public class IpManagerService
     {
         RefreshCache();
         
-        var unreadNotifs = _imperialPluginsClient.GetNotifications(100000).Items.Where(x => x.readTime == null)
-            .Where(x => x.NotificationType is ENotificationType.WhitelistRequest or ENotificationType.Ticket);
+        var unreadNotifs = _imperialPluginsClient.GetNotifications(100000).Items/*.Where(x => x.readTime == null)*/
+           .Where(x => x.NotificationType is ENotificationType.WhitelistRequest or ENotificationType.Ticket);
+        
         foreach (var notification in unreadNotifs)
         {
             var embed = new EmbedBuilder()
                 .WithTitle(notification.NotificationType.ToString())
                 .WithDescription(notification.Title)
                 .WithTimestamp(new DateTimeOffset(notification.creationTime))
-                .WithFooter(new EmbedFooterBuilder {IconUrl = notification.ThumbnailUrl, Text = notification.ID})
                 .WithUrl(notification.Url)
                 .WithColor(Discord.Color.Blue)
                 .AddField("Message", notification.HtmlContent)
@@ -226,4 +253,7 @@ public class IpManagerService
     
     public List<PluginRegistration>? GetCustomerProducts(IPUser user) =>
         RegistrationsCache == null ? null : RegistrationsCache.Items.Where(i => i.OwnerName.Contains(user.UserName, StringComparison.InvariantCultureIgnoreCase)).ToList();
+
+    public List<ProductInstallation> GetCustomerServers(IPUser user) => 
+        _imperialPluginsClient.GetInstallations(user.Id, 10000).Items.ToList();
 }
