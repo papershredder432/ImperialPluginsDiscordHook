@@ -77,7 +77,7 @@ public class ImperialPlugins
 
             await client.LoginAsync(TokenType.Bot, config["client:token"]);
             await client.StartAsync();
-
+            
             await Task.Delay(-1);
         }
 }

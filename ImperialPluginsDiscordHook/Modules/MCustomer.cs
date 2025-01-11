@@ -1,41 +1,61 @@
-using System.Linq;
-using System.Threading.Tasks;
+using Discord;
 using Discord.Interactions;
 using ImperialPlugins;
+using ImperialPlugins.Models.Coupons;
+using ImperialPluginsDiscordHook.Services;
 
 namespace ImperialPluginsDiscordHook.Modules;
 
-[Group("generic", "Things for the average user.")]
+[Group("customer", "Things for the average user.")]
 public class MCustomer : InteractionModuleBase<SocketInteractionContext>
 {
-    private readonly ImperialPluginsClient _imperialPluginsClient;
+    private readonly LoggingService _loggingService;
+    private readonly IpManagerService _ipManagerService;
     private readonly InteractionService _interactionService;
-    
-    //private List<string> _couponBlacklist = new List<string> { "IP-TEST" };
+    private readonly ImperialPluginsClient _imperialPluginsClient;
 
-    public MCustomer(ImperialPluginsClient imperialPluginsClient, InteractionService interactionService)
+    private List<Coupon> allCoupons = new List<Coupon>
     {
-        _imperialPluginsClient = imperialPluginsClient;
+        new Coupon {Name = "IP-TEST", Usages = 0, MaxUsages = 100, IsActive = true, IsEnabled = true, ExpirationTime = DateTime.MaxValue, Key = "THEKEY"},
+        new Coupon {Name = "IP-TEST2", Usages = 17, MaxUsages = 100, IsActive = true, IsEnabled = true, ExpirationTime = DateTime.MaxValue, Key = "THEKEY2"},
+        new Coupon {Name = "IP-TEST3", Usages = 50, MaxUsages = 100, IsActive = false, IsEnabled = true, ExpirationTime = DateTime.MaxValue, Key = "THEKEY3"}, 
+        new Coupon {Name = "IP-TEST4", Usages = 100, MaxUsages = 100, IsActive = true, IsEnabled = true, ExpirationTime = DateTime.MaxValue, Key = "THEKEY4"}
+    };
+    private List<string> _couponBlacklist = new List<string> { "IP-TEST" };
+
+    public MCustomer(LoggingService loggingService, IpManagerService ipManagerService, InteractionService interactionService, ImperialPluginsClient imperialPluginsClient)
+    {
+        _loggingService = loggingService;
+        _ipManagerService = ipManagerService;
         _interactionService = interactionService;
+        _imperialPluginsClient = imperialPluginsClient;
     }
 
-    [SlashCommand("customer", "<email> | Registers you as a customer.")]
-    public async Task Customer(string email)
+    [SlashCommand("register", "<email> | Registers you as a customer.")]
+    public async Task Register(string email)
     {
-        var user = _imperialPluginsClient.GetUsers(100000).Items.FirstOrDefault(x => x.Email == email);
-        
+        var user = _ipManagerService.GetUserAsync(email);
         if (user == null)
         {
             await RespondAsync("User not found.", ephemeral: true);
             return;
         }
+
+        var prod = _ipManagerService.GetCustomerProducts(user);
+        if (prod == null)
+        {
+            await RespondAsync("No products found.", ephemeral: true);
+            return;
+        }
+
+        await RespondAsync($"Found {prod.Count} orders. Assigning customer's role(s).", ephemeral: true);
     }
     
-    /*
     [SlashCommand("ongoingpromotions", "Shows all ongoing promotions.")]
     public async Task OngoingPromotions()
     {
-        var promotions = (await _imperialPluginsClient.GetCouponsAsync(100000)).Items.Where(x => x.IsActive && x.IsEnabled && x.Usages < x.MaxUsages && !_couponBlacklist.Contains(x.Name)).ToList();
+        //var promotions = (await _imperialPluginsClient.GetCouponsAsync(100000)).Items.Where(x => x.IsActive && x.IsEnabled && x.Usages < x.MaxUsages && !_couponBlacklist.Contains(x.Name)).ToList();
+        var promotions = allCoupons.Where(x => x.IsActive && x.IsEnabled && x.Usages < x.MaxUsages && !_couponBlacklist.Contains(x.Name)).ToList();
         
         if (promotions.Count == 0)
         {
@@ -55,5 +75,5 @@ public class MCustomer : InteractionModuleBase<SocketInteractionContext>
         
         await RespondAsync(embed: embed.Build());
     }
-    */
+    
 }
