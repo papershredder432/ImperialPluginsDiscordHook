@@ -30,13 +30,16 @@ public class IpManagerService
     public EnumerableResponse<PluginRegistration> RegistrationsCache;
     public DateTime LastRefresh;
     
-    public IpManagerService(DiscordSocketClient discordSocketClient, IConfigurationRoot configuration, ImperialPluginsClient imperialPluginsClient, LoggingService loggingService)
+    public IpManagerService(DiscordSocketClient discordSocketClient, IConfigurationRoot configuration, ImperialPluginsClient imperialPluginsClient, LoggingService loggingService, EnumerableResponse<IPUser> usersCache, EnumerableResponse<IPPlugin> pluginsCache, EnumerableResponse<PluginRegistration> registrationsCache)
     {
         _configuration = configuration;
         _discordSocketClient = discordSocketClient; 
         _imperialPluginsClient = imperialPluginsClient;
         _loggingService = loggingService;
-        
+        UsersCache = usersCache;
+        PluginsCache = pluginsCache;
+        RegistrationsCache = registrationsCache;
+
         _discordSocketClient.ButtonExecuted += OnButtonExecuted;
         _discordSocketClient.ModalSubmitted += OnModalSubmitted;
         

@@ -24,6 +24,13 @@ public class MCustomer : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("register", "<email> | Registers you as a customer.")]
     public async Task Register(string email)
     {
+        // Check if the guild is ImperialPlugins.com
+        if (Context.Guild.Id == 284399832385191936)
+        {
+            await RespondAsync("That command is disabled in this guild.", ephemeral: true);
+            return;
+        }
+        
         var user = _ipManagerService.GetUserAsync(email);
         if (user == null)
         {

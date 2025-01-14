@@ -16,6 +16,7 @@
       <PackageReference Include="Microsoft.Extensions.Configuration.Yaml" Version="2.0.0-preview2" />
       <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
       <PackageReference Include="Pastel" Version="6.0.1" />
+      <PackageReference Include="ShimmyMySherbet.MySQL.EF" Version="1.8.9" />
     </ItemGroup>
 
     <ItemGroup>

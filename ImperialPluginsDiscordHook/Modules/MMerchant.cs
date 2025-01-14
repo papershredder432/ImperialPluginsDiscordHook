@@ -3,26 +3,29 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using ImperialPlugins;
 using ImperialPluginsDiscordHook.Enum;
+using ImperialPluginsDiscordHook.Models;
 using ImperialPluginsDiscordHook.Services;
 
 namespace ImperialPluginsDiscordHook.Modules;
 
-[Group("dev", "Dev commands.")]
-public class MDev : InteractionModuleBase<SocketInteractionContext>
+[Group("merchant", "Merchant commands.")]
+public class MMerchant : InteractionModuleBase<SocketInteractionContext>
 {
     private readonly LoggingService _loggingService;
     private readonly IpManagerService _ipManagerService;
     private readonly InteractionService _interactionService;
     private readonly ImperialPluginsClient _imperialPluginsClient;
     private readonly DiscordSocketClient _discordSocketClient;
+    private readonly MySqlDbService _dbService;
 
-    public MDev(LoggingService loggingService, IpManagerService ipManagerService, InteractionService interactionService, ImperialPluginsClient imperialPluginsClient, DiscordSocketClient discordSocketClient)
+    public MMerchant(LoggingService loggingService, IpManagerService ipManagerService, InteractionService interactionService, ImperialPluginsClient imperialPluginsClient, DiscordSocketClient discordSocketClient, MySqlDbService dbService)
     {
         _loggingService = loggingService;
         _ipManagerService = ipManagerService;
         _interactionService = interactionService;
         _imperialPluginsClient = imperialPluginsClient;
         _discordSocketClient = discordSocketClient;
+        _dbService = dbService;
 
         _discordSocketClient.SelectMenuExecuted += SelectMenuExecuted;
     }
@@ -116,5 +119,36 @@ public class MDev : InteractionModuleBase<SocketInteractionContext>
         {
             await RespondAsync(e.Message, ephemeral: true);
         }
+    }
+    
+    [SlashCommand("initialize", "Initializes yourself as merchant.")]
+    public async Task Initialize()
+    {
+        //await new MySqlDbService(Context.Configuration, _loggingService).InitializeMerchantAsync(settings);
+        await _dbService.InitializeMerchantAsync(new MMerchantSettings
+        {
+            DicordId = Context.User.Id,
+        });
+        await RespondAsync("Initialized.", ephemeral: true);
+    }
+    
+    [SlashCommand("settings", "Gets your merchant settings.")]
+    public async Task Settings()
+    {
+        var set = _dbService.GetMerchantSettingsAsync(Context.User.Id);
+        var postSet = set.Result;
+        if (set == null)
+        {
+            await RespondAsync("You are not initialized, please use the command `/merchant Initialize`", ephemeral: true);
+            return;
+        }
+        
+        var embedToSend = new EmbedBuilder()
+            .WithTitle("Merchant Settings")
+            .AddField("ImperialPlugins ID", postSet.ImperialPluginsId)
+            .AddField("Promotions List Enabled", postSet.PromotionsListEnabled)
+            .WithColor(Color.Blue);
+        
+        await RespondAsync(embed: embedToSend.Build(), ephemeral: true);
     }
 }

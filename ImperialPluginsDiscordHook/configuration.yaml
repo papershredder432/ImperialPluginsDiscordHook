@@ -14,7 +14,7 @@ database:
   username: username
   password: password
   name: name
-  table: table
+  merchant_suffix: _merchant_settings
 
 dev:
   debug: true
